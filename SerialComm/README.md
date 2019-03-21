@@ -10,3 +10,7 @@ Each message will be proceeded by a header byte specifying what data is being se
 * 0x08 - Command received confirmation
 * 0x10 - Reset
 * 0x20 - Shutdown
+
+
+## **Handshake** - Header `0x01`
+ The message has no payload (it only consists of the header). When the laptop has fully performed intialization steps, it repeatedly sends an initialization message to the Arduino. When the Arduino has performed it's initialization step, it waits to receive the initialization message from the laptop. On receipt, the Arduino will respond with an initialization method signifying that the initialization handshake is complete.
