@@ -15,9 +15,16 @@ class ArduinoInterface():
         self.ser.port = port
         self.ser.timeout = 0.1
         self.ser.open()
+        time.sleep(5)
 
         # Define standard message headers in arduino-laptop communication interfaces
-        self.initHandshakeHeader = b"\x01"
+        self.initHandshakeHeader = 1
+        self.moveChessPieceHeader = 2
+        self.buttonPressedHeader = 4
+        self.commandReceivedHeader = 8
+        self.commandCompletedHeader = 16
+        self.resetHeader = 32
+        self.shutdownHeader = 64
 
         # Perform initialization handshake to ensure arduino is ready
         self.initHandshake()
@@ -25,37 +32,118 @@ class ArduinoInterface():
     # Reads all messages in buffer to clear
     # Use only between commands when confident arduino is not sending data
     def clearBuffer(self):
-        messagedReceived = b""
+        while(self.ser.read(1) != b""):
+            pass
+
 
     # Perform initialization handshake signifying laptop is ready to begn
     # Waits until init handshake is received from Arduino before proceeding
     def initHandshake(self):
         received = b""
         # loop until a initialization message is received
-        while(self.ser.read(1) != self.initHandshakeHeader):
-            self.ser.write(self.initHandshakeHeader)
+        while(self.ser.read(1) != bytes([self.initHandshakeHeader])):
+            self.ser.write(bytes([self.initHandshakeHeader]))
 
+        print("STATUS UPDATE: Initialization Procdure Complete")
+
+        # Clear serial buffer of init messages and delay 1 secondt
+        self.clearBuffer()
+        time.sleep(1)
+
+    # Sends command to arduino to move chess piece from curPos to newPos
+    #   curPos - current location of chess piece to move
+    #   nextPos - position to move the chess piece to
+    #   capture - boolean stating whether or not the move is capturing a piece
+    def moveChessPiece(self, curPos, newPos, capture):
+        print("STATUS UPDATE: Sending computer move")
+        message = self.moveChessPieceHeader.to_bytes(1 , "little")
+        message += curPos.to_bytes(1, "little")
+        message += newPos.to_bytes(1, "little")
+        message +=  (1 if capture else 0).to_bytes(1, "little")
+
+        # Publish message until confirmation received that arduino received message
+        while(self.ser.read(1) != self.commandReceivedHeader.to_bytes(1, "little")):
+            self.ser.write(message)
+            time.sleep(0.1)
+
+        print("STATUS UPDATE: Waiting for robot to finish moving pieces")
+        # Clear serial buffer of init messages and delay 1/2 second
+        self.clearBuffer()
+        time.sleep(0.5)
+
+        # Wait until Arduino sends a command completed message
+        while(self.ser.read(1) != self.commandCompletedHeader.to_bytes(1, "little")):
+            pass
+        # Send confirmation that message was successfully received
+        self.ser.write(self.commandReceivedHeader.to_bytes(1, "little"))
+        print("STATUS UPDATE: Completed move")
+
+        # Clear serial buffer of init messages and delay 1 second
+        self.clearBuffer()
+        time.sleep(1)
 
     # Function to wait for the player to make a move
     # Arduino sends command over serial when player makes a move (presses the button)
     def waitForPlayerMove(self):
-        while True:
-            self.ser.write(b'\x10')
-            print(self.ser.read(1))
-            #print(b'\x10'[0])
-            time.sleep(2)
-            # out = self.ser.read(1)
-            # if(len(out) > 0):
-            #     print(out[0])
+        print("STATUS UPDATE: Waiting for player to make move...")
+        while(self.ser.read(1) != bytes([self.buttonPressedHeader])):
+            pass
+        self.ser.write(self.commandReceivedHeader.to_bytes(1, "little"))
+        self.clearBuffer()
+        time.sleep(1)
 
-    # Function to send the computer to move to the arduino
-    def sendComputerMove(self):
-        #TODO Write function
-        return
+    # Function to command the Arduino to perform shutdown routine
+    def reset(self):
+        print("STATUS UPDATE: Sending reset command to robot")
+        message = self.resetHeader.to_bytes(1 , "little")
+        while(self.ser.read(1) != self.commandReceivedHeader.to_bytes(1, "little")):
+            self.ser.write(message)
+            time.sleep(0.1)
+
+        print("STATUS UPDATE: Waiting for robot to finish reset procedure")
+        # Clear serial buffer and delay 1/2 second
+        self.clearBuffer()
+        time.sleep(0.5)
+
+        # Wait until Arduino sends a command completed message
+        while(self.ser.read(1) != self.commandCompletedHeader.to_bytes(1, "little")):
+            pass
+        # Send confirmation that message was successfully received
+        self.ser.write(self.commandReceivedHeader.to_bytes(1, "little"))
+        print("STATUS UPDATE: Completed reset procedure")
+
+        # Clear serial buffer of init messages and delay 1 second
+        self.clearBuffer()
+        time.sleep(1)
+
+    # Function to command the Arduino to perform shutdown routine
+    def shutdown(self):
+        print("STATUS UPDATE: Sending shutdown command to robot")
+        message = self.shutdownHeader.to_bytes(1 , "little")
+        while(self.ser.read(1) != self.commandReceivedHeader.to_bytes(1, "little")):
+            self.ser.write(message)
+            time.sleep(0.1)
+
+        print("STATUS UPDATE: Waiting for robot to finish shutdown procedure")
+        # Clear serial buffer of init messages and delay 1/2 second
+        self.clearBuffer()
+        time.sleep(0.5)
+
+        # Wait until Arduino sends a command completed message
+        while(self.ser.read(1) != self.commandCompletedHeader.to_bytes(1, "little")):
+            pass
+        # Send confirmation that message was successfully received
+        self.ser.write(self.commandReceivedHeader.to_bytes(1, "little"))
+        print("STATUS UPDATE: Shutdown complete")
+
+        # Clear serial buffer of init messages and delay 1 second
+        self.clearBuffer()
+        time.sleep(1)
 
 test = ArduinoInterface()
 test.initHandshake()
 print("Successfully initialized")
+test.reset()
 
 
 
