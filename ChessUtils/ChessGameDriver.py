@@ -4,8 +4,7 @@ import chess
 class ChessGameDriver():
 
     def __init__(self):
-        # Search depth for alpha-beta search
-        self.searchDepth = None
+
 
         self.board = None
 
