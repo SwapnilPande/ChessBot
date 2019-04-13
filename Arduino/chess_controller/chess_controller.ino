@@ -17,60 +17,81 @@
 #define RPM 240
 #define DIRECTION_PIN_X 8
 #define STEP_PIN_X 9
-#define DIRECTION_PIN_X 6
-#define STEP_PIN_X 7
+#define DIRECTION_PIN_Y 6
+#define STEP_PIN_Y 7
 #define MICROSTEPS 1
 
-#define DEGREES_PER_SQUARE 180.180180180
-#define DEGREE_OFFSET_X 1 // Offset from the 0 position to the middle of the first square
-#define DEGREE_OFFSET_Y 1
-long currentSquareX;
-long currentSquareY;
-//Acceleration
-/*
-#define MOTOR_ACCEL 1000
-#define MOTOR_DECCEL 1000
+#define DEGREES_PER_SQUARE 2162.162162
+#define DEGREE_OFFSET_X 900 // Offset from the 0 position to the middle of the first square
+#define DEGREE_OFFSET_Y 350
+double currentSquareX;
+double currentSquareY;
 
- */
+// MAGNET PIN
+#define MAGNET_PIN 3
 
 // Initialize Stepper Motor Drivers here
 DRV8825 stepperX(STEPS_PER_REV, DIRECTION_PIN_X, STEP_PIN_X);
 DRV8825 stepperY(STEPS_PER_REV, DIRECTION_PIN_Y, STEP_PIN_Y);
 
+
+//////////////////// MAGNET CODE
+void magnetInit()
+{
+  pinMode(MAGNET_PIN, OUTPUT);
+}
+
+void magnetOn()
+{
+  digitalWrite(MAGNET_PIN,HIGH);
+  delay(250);
+}
+
+void magnetOff()
+{
+  digitalWrite(MAGNET_PIN,LOW);
+  delay(250);
+}
+
+
+
 // These two functions calculate how much to move the motors to move to the desired square
-void moveToXCoordinate(int squareCoord)
+void moveToXCoordinate(double squareCoord)
 {
   stepperX.rotate(DEGREES_PER_SQUARE*(squareCoord - currentSquareX));
   currentSquareX = squareCoord;
 }
 
-void moveToYCoordinate(int squareCoord)
+void moveToYCoordinate(double squareCoord)
 {
   stepperY.rotate(DEGREES_PER_SQUARE*(squareCoord - currentSquareY));
   currentSquareY = squareCoord;
 }
 
-void makeMove(int startX, int startY, int finalX, int finalY)
+void makeMove(double startX, double startY, double finalX, double finalY)
 {
   // Go to first square location
   moveToXCoordinate(startX);
   moveToYCoordinate(startY);
 
-  /////// TURN ON MAGNET
+  magnetOn();
 
   // Move to corner of sqaure
-  moveToXCoordinate(startX-0.5);
+  moveToXCoordinate(startX+0.5);
   moveToYCoordinate(startY+0.5);
 
   // Move to new square
-  moveToXCoordinate(finalX-0.5);
+  moveToXCoordinate(finalX+0.5);
   moveToYCoordinate(finalY+0.5);
 
   // Move to center of square
   moveToXCoordinate(finalX);
-  moveToYCoordinate(finalY);
+  moveToYCoordinate(finalY-.1);
 
-  //////// TURN OFF MAGNET
+  magnetOff();
+
+  moveToXCoordinate(finalX);
+  moveToYCoordinate(finalY);
 }
 
 
@@ -163,8 +184,8 @@ void moveChessPiece()
 void reset()
 {
   // Initial Stepper motor positions
-  currentLocationX = 0;
-  currentLocationY = 0;
+  currentSquareX = 0;
+  currentSquareY = 0;
 
   //TODO impelement reset procedure
   delay(5000);
@@ -238,8 +259,11 @@ void waitForNextCommand()
   }
 }
 
+
 void setup() {
   Serial.begin(9600);
+
+  magnetInit();
 
   // Init stepper motors
   stepperX.begin(RPM, MICROSTEPS);
@@ -249,11 +273,32 @@ void setup() {
   stepperX.rotate(DEGREE_OFFSET_X);
   stepperY.rotate(DEGREE_OFFSET_Y);
   
-  initHandshake();
+  //initHandshake();
   //waitForNextCommand();
+  Serial.println("testing");
+
+  magnetOff();
 
 }
 
+int degree;
+int curDegree;
+
+int currCoord = 0;
+int prevCoord = 0;
 void loop() {
-  delay(1000);
+  
+  if (Serial.available() > 0) {
+    // read the incoming byte:
+    currCoord = Serial.parseInt();
+
+    while(Serial.available())
+    {
+      degree = Serial.read();
+    }
+
+    makeMove(2, 0, 2, 2);
+    prevCoord = currCoord;
+  }
+  
 }
