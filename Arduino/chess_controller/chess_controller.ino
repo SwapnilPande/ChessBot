@@ -24,8 +24,15 @@
 #define DEGREES_PER_SQUARE 2162.162162
 #define DEGREE_OFFSET_X 900 // Offset from the 0 position to the middle of the first square
 #define DEGREE_OFFSET_Y 350
+#define MAX_X 19250
+// TODO: UPDATE VALUE
+#define MAX_Y 15000
+
+// Variables to store the current position of the motor
 double currentSquareX;
 double currentSquareY;
+double currentDegreeX;
+double currentDegreesY;
 
 // MAGNET PIN
 #define MAGNET_PIN 3
@@ -52,24 +59,79 @@ void magnetOff()
   digitalWrite(MAGNET_PIN,LOW);
   delay(250);
 }
+//////////////////// END MAGNET CODE
 
 
+//////////////////// MOTOR CONTROL CODE
+
+void moveToXDegree(double degree)
+{
+  stepperX.rotate(degree - currentDegreeX);
+  currentDegreeX = degree;
+}
+
+void moveToYDegree(double degree)
+{
+  stepperY.rotate(degree - currentDegreeY);
+  currentDegreeY = degree;
+}
 
 // These two functions calculate how much to move the motors to move to the desired square
 void moveToXCoordinate(double squareCoord)
 {
-  stepperX.rotate(DEGREES_PER_SQUARE*(squareCoord - currentSquareX));
+  moveToXDegree(DEGREES_PER_SQUARE*squareCoord + DEGREE_OFFSET_X);
   currentSquareX = squareCoord;
 }
 
 void moveToYCoordinate(double squareCoord)
 {
-  stepperY.rotate(DEGREES_PER_SQUARE*(squareCoord - currentSquareY));
+  moveToYDegree(DEGREES_PER_SQUARE*squareCoord + DEGREE_OFFSET_Y);
   currentSquareY = squareCoord;
 }
 
-void makeMove(double startX, double startY, double finalX, double finalY)
+void moveToMaxX()
 {
+  moveToXDegree(MAX_X);
+}
+
+void moveToMaxY()
+{
+  moveToYDegree(MAX_Y);
+}
+
+void returnToZero()
+{
+  moveToXCoordinate(0);
+  stepperX.rotate(-1*DEGREE_OFFSET_X);
+
+  moveToYCoordinate(0);
+  stepperY.rotate(-1*DEGREE_OFFSET_Y);
+}
+
+void makeMove(double startX, double startY, double finalX, double finalY, bool capture)
+{
+  // If this move is a capture
+  if(capture)
+  {
+    // Move to capture piece position
+    moveToXCoordinate(finalX);
+    moveToYCoordinate(finalY);
+
+    magnetOn();
+
+    // Move to corner of square
+    moveToXCoordinate(finalX+0.5);
+    moveToYCoordinate(finalY+0.5);
+
+    // Move to center of board
+    moveToYCoordinate(4.5);
+    // Release piece at edge of board
+    moveToMaxX();
+
+    magnetOff();
+  }
+
+  
   // Go to first square location
   moveToXCoordinate(startX);
   moveToYCoordinate(startY);
@@ -93,6 +155,8 @@ void makeMove(double startX, double startY, double finalX, double finalY)
   moveToXCoordinate(finalX);
   moveToYCoordinate(finalY);
 }
+
+
 
 
 // Clears the serial buffer to prepare for the next instruction from the laptop
@@ -270,8 +334,8 @@ void setup() {
   stepperY.begin(RPM, MICROSTEPS);
 
   // Move motors to (0x0) square
-  stepperX.rotate(DEGREE_OFFSET_X);
-  stepperY.rotate(DEGREE_OFFSET_Y);
+  //stepperX.rotate(DEGREE_OFFSET_X);
+  //stepperY.rotate(DEGREE_OFFSET_Y);
   
   //initHandshake();
   //waitForNextCommand();
@@ -287,17 +351,23 @@ int curDegree;
 int currCoord = 0;
 int prevCoord = 0;
 void loop() {
-  
   if (Serial.available() > 0) {
     // read the incoming byte:
     currCoord = Serial.parseInt();
+    int difference = currCoord - prevCoord;
+    Serial.print("Current Coord: ");
+    Serial.println(currCoord);
+    Serial.print("Previous coord: ");
+    Serial.println(prevCoord);
+
+    stepperX.rotate(difference);
 
     while(Serial.available())
     {
       degree = Serial.read();
     }
 
-    makeMove(2, 0, 2, 2);
+    //makeMove(2, 0, 2, 2);
     prevCoord = currCoord;
   }
   
