@@ -19,9 +19,30 @@ class ChessID:
 
     #def segmentChessBoard(self, image):
 
+    # calibrateBoardPosition
+    # Function to call at the beginning of programming execution
+    # Displays video feed with dots for the four corners of the chessboard overlaid
+    # Use to adjust camera and chessboard
+    def calibrateBoardPosition(self):
+        # Loop until 'q' key is pressed
+        while(True):
+            # Read in frame
+            ret, frame = self.camera.read()
+
+            # Draw circles on the four corners of the chessboard
+            cv2.circle(frame, (self.squareCoords[0][2], self.squareCoords[0][1]), 5, (0,255,0), -1)
+            cv2.circle(frame, (self.squareCoords[7][0], self.squareCoords[7][1]), 5, (0,255,0), -1)
+            cv2.circle(frame, (self.squareCoords[56][2], self.squareCoords[56][3]), 5, (0,255,0), -1)
+            cv2.circle(frame, (self.squareCoords[63][0], self.squareCoords[63][3]), 5, (0,255,0), -1)
+
+            # Display image with circle
+            cv2.imshow('Calibrate Board Position', frame)
+
+            # Exit if q is pressed
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
     def getBoardState(self):
-        # Capture image
         ret, frame = self.camera.read()
 
         # squares each individual image of a square
@@ -43,5 +64,6 @@ class ChessID:
 
 test = ChessID()
 
-test.getBoardState()
+test.calibrateBoardPosition()
+test.releaseCamera()
 
