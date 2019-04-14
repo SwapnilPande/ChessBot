@@ -8,6 +8,8 @@ verify_ssl = true
 [packages]
 pyserial = "*"
 opencv-python = "*"
+keras = "*"
+tensorflow = "*"
 
 [requires]
 python_version = "3.7"

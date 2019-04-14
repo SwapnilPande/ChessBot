@@ -1,4 +1,6 @@
 import cv2
+import numpy as np
+from keras.models import load_model
 
 class ChessID:
     def __init__(self):
@@ -8,7 +10,15 @@ class ChessID:
         # Path to file containing coordinates for chessboard squares
         self.coordinatePath = "square_locations.txt"
 
+        # Path to chess-id neural network model
+        self.modelPath = "final_chess-id_model.hdf5"
+        self.model = load_model(self.modelPath)
+
+        # List that stores the pixel coords of the squares on the chessboard
         self.squareCoords = []
+
+        # Dimension of each individual square image
+        self.squareImageDim = 227
 
         with open(self.coordinatePath) as coordFile:
             for line in coordFile:
@@ -42,20 +52,30 @@ class ChessID:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
+    def predict(self, squareImages):
+        return self.model.predict(squareImages)
+
+
+
     def getBoardState(self):
         ret, frame = self.camera.read()
 
-        # squares each individual image of a square
-        squares = []
-        for squareCoord in self.squareCoords:
-            squares.append(frame[squareCoord[0]:squareCoord[2],
-                                squareCoord[1]:squareCoord[3],:])
+        # Init empty np array to store the segmented square images
+        squares = np.empty((64, self.squareImageDim, self.squareImageDim, 3))
 
-        # Segment squares
+        # Split each individual square image
+        for i, squareCoord in enumerate(self.squareCoords):
+            squares[i] = cv2.resize(frame[squareCoord[1]:squareCoord[3],
+                                            squareCoord[0]:squareCoord[2],:],
+                                (self.squareImageDim, self.squareImageDim))
 
-        # Feed each square through neural network
+        print("starting prediction")
+        predictions = []
+        for square in squares:
+            predictions.append(self.predict(np.expand_dims(square, axis=0)))
 
         # Return piece at each square
+        return predictions
 
     # Close camera device
     def releaseCamera(self):
@@ -64,6 +84,11 @@ class ChessID:
 
 test = ChessID()
 
-test.calibrateBoardPosition()
+#test.calibrateBoardPosition()
+board = test.getBoardState()
+
+for part in board:
+    print(part)
+    print()
 test.releaseCamera()
 
