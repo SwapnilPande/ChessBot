@@ -50,17 +50,75 @@ class DeepChess:
 
         # Return better bitboard
 
-    # Returns a list of legal moves for the BLACK PLAYER
-    # board is a chess board object
-    def getLegalMoves(self, board):
-        return
 
     def generateMove(self, board):
-        # Determine all legal moves
+        alpha = -1
+        beta = 1
+        v = -1
+        depth = 2
+        moves = []
+        for move in board.legal_moves:
+            cur = copy.copy(board)
+            cur.push(move)
+            if v == -1:
+                v = self.alphabeta(cur, depth-1, alpha, beta, False)
+                bestMove = move
+                if alpha == -1:
+                    alpha = v
+            else:
+                new_v = self.predict(self.alphabeta(cur, depth-1, alpha, beta, False), v)[0]
+                if new_v != v:
+                    bestMove = move
+                    v = new_v
+                alpha = self.predict(alpha, v)[0]
+
+        print(bestMove)
+        board.push(bestMove)
+        return move.from_square, move.to_square
 
         # Perform alpha-beta search to find optimal move
 
         # Return better move
+
+
+    def alphabeta(self, node, depth, alpha, beta, maximizingPlayer):
+        if depth == 0:
+            return node
+        if maximizingPlayer:
+            v = -1
+            for move in node.legal_moves:
+                cur = copy.copy(node)
+                cur.push(move)
+                if v == -1:
+                    v = alphabeta(cur, depth-1, alpha, beta, False)
+                if alpha == -1:
+                    alpha = v
+
+                v = netPredict(v, alphabeta(cur, depth-1, alpha, beta, False))[0]
+                alpha = netPredict(alpha, v)[0]
+                if beta != 1:
+                    if netPredict(alpha, beta)[0] == alpha:
+                        break
+            return v
+        else:
+            v = 1
+            for move in node.legal_moves:
+                cur = copy.copy(node)
+                cur.push(move)
+                if v == 1:
+                    v = alphabeta(cur, depth-1, alpha, beta, True)
+                if beta == 1:
+                    beta = v
+
+                v = netPredict(v, alphabeta(cur, depth-1, alpha, beta, True))[1]
+                beta = netPredict(beta, v)[1]
+                if alpha != -1:
+                    if netPredict(alpha, beta)[0] == alpha:
+                        break
+            return v
+
+    def computerMove(board, depth):
+
 
 
 

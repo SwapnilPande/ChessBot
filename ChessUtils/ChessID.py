@@ -77,14 +77,14 @@ class ChessID:
         print("starting prediction")
         predictions = []
         for square in squares:
-            cv2.imshow("test", square)
-            cv2.waitKey(5000)
+            #cv2.imshow("test", square)
+            #cv2.waitKey(5000)
             out = self.predict(np.expand_dims(square, axis=0))[0]
             index = np.where(out == np.max(out))[0][0]
 
             predictions.append(self.categories[index])
             print(self.categories[index])
-            cv2.destroyAllWindows()
+            #cv2.destroyAllWindows()
 
         # Return piece at each square
         return predictions

@@ -33,7 +33,13 @@ while(not shutdown):
 
     chessDriver.addPlayerMove(piecePredictions)
 
-    deepchess.generateMove(chessDriver.getBoard())
+    startSquare, endSquare = deepchess.generateMove(chessDriver.getBoard())
+
+    # TODO Convert move to chess board coordinate frame, check if move is capture
+    # TODO FINISH IMPLEMENTING THIS FUNCTION
+    # TODO ADD CODE TO IGNORE CASTLES
+    arduino.moveChessPiece()
+
 
 
 

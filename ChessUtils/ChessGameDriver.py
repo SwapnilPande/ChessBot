@@ -50,7 +50,6 @@ class ChessGameDriver():
     def addPlayerMove(self, piecePositions):
         # differences stores the chess pieces that have changed between consecutive boards
         differences  = []
-        print(self.prevPiecePositions)
         # Iterate over all pairs of pieces
         for i, (previousPiece, curPiece) in enumerate(zip(self.prevPiecePositions, piecePositions)):
             if previousPiece != curPiece:
