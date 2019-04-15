@@ -44,11 +44,12 @@ class ArduinoInterface():
         while(self.ser.read(1) != bytes([self.initHandshakeHeader])):
             self.ser.write(bytes([self.initHandshakeHeader]))
 
-        print("STATUS UPDATE: Initialization Procdure Complete")
+        print("STATUS UPDATE: Initialization Procedure Complete")
 
         # Clear serial buffer of init messages and delay 1 secondt
-        self.clearBuffer()
-        time.sleep(1)
+        #self.clearBuffer()
+        #time.sleep(1)
+        return
 
     # Sends command to arduino to move chess piece from curPos to newPos
     #   curPos - current location of chess piece to move
@@ -68,7 +69,7 @@ class ArduinoInterface():
 
         print("STATUS UPDATE: Waiting for robot to finish moving pieces")
         # Clear serial buffer of init messages and delay 1/2 second
-        self.clearBuffer()
+        #self.clearBuffer()
         time.sleep(0.5)
 
         # Wait until Arduino sends a command completed message
@@ -143,7 +144,13 @@ class ArduinoInterface():
 test = ArduinoInterface()
 test.initHandshake()
 print("Successfully initialized")
-test.reset()
+while(True):
+    start = input("Start Position: ")
+    finish = input("Finish Position: ")
+    capture = input("Capture: ")
+
+    test.moveChessPiece(int(start), int(finish), capture == "True")
+
 
 
 

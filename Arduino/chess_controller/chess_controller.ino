@@ -23,16 +23,15 @@
 
 #define DEGREES_PER_SQUARE 2162.162162
 #define DEGREE_OFFSET_X 900 // Offset from the 0 position to the middle of the first square
-#define DEGREE_OFFSET_Y 350
+#define DEGREE_OFFSET_Y 150
 #define MAX_X 19250
-// TODO: UPDATE VALUE
-#define MAX_Y 15000
+#define MAX_Y 17500
 
 // Variables to store the current position of the motor
 double currentSquareX;
 double currentSquareY;
 double currentDegreeX;
-double currentDegreesY;
+double currentDegreeY;
 
 // MAGNET PIN
 #define MAGNET_PIN 3
@@ -101,11 +100,8 @@ void moveToMaxY()
 
 void returnToZero()
 {
-  moveToXCoordinate(0);
-  stepperX.rotate(-1*DEGREE_OFFSET_X);
-
-  moveToYCoordinate(0);
-  stepperY.rotate(-1*DEGREE_OFFSET_Y);
+  moveToXDegree(0);
+  moveToYDegree(0);
 }
 
 void makeMove(double startX, double startY, double finalX, double finalY, bool capture)
@@ -148,7 +144,7 @@ void makeMove(double startX, double startY, double finalX, double finalY, bool c
 
   // Move to center of square
   moveToXCoordinate(finalX);
-  moveToYCoordinate(finalY-.1);
+  moveToYCoordinate(finalY-0.2);
 
   magnetOff();
 
@@ -202,13 +198,13 @@ void moveChessPiece()
   // Read in payload of message
   while(Serial.available() < 1)
   {}
-  byte originalCoordinate = Serial.read();
+  int originalCoordinate = Serial.read();
   while(Serial.available() < 1)
   {}
-  byte newCoordinate = Serial.read();
+  int newCoordinate = Serial.read();
   while(Serial.available() < 1)
   {}
-  byte capture = Serial.read();
+  int capture = Serial.read();
   
   // Checking for errors in data
   if(originalCoordinate < 0 || originalCoordinate > 63)
@@ -229,13 +225,17 @@ void moveChessPiece()
   // If no errors in message, send messageSucessfulyReceived message
   messageSucessfulyReceived();
 
-//  //// TEST CODE
-//  if(originalCoordinate == 10 && newCoordinate == 15 && capture == 0)
-//  {
-//    digitalWrite(13, HIGH);
-//  }
+  // Convert coord in range 0-63 to (x,y) coord
+  bool captureBool = (capture == 1);
+  double startX = originalCoordinate%8;
+  int intermediate = originalCoordinate/8;
+  int startY = intermediate%8;
 
-  //TODO impelement chess piece moving code
+  double finalX = newCoordinate%8;
+  intermediate = newCoordinate/8;
+  int finalY = intermediate%8;
+  
+  makeMove(startX, startY, finalX, finalY, captureBool);
 
   // Send command completed message
   while(Serial.read() != COMMAND_RECEIVED_HEADER)
@@ -247,13 +247,11 @@ void moveChessPiece()
 
 void reset()
 {
-  // Initial Stepper motor positions
-  currentSquareX = 0;
-  currentSquareY = 0;
-
-  //TODO impelement reset procedure
-  delay(5000);
-
+  // Turn off magnet and return to 0 square
+  magnetOff();
+  moveToXCoordinate(0);
+  moveToYCoordinate(0);
+ 
   // Send command completed message
   while(Serial.read() != COMMAND_RECEIVED_HEADER)
   {
@@ -333,15 +331,18 @@ void setup() {
   stepperX.begin(RPM, MICROSTEPS);
   stepperY.begin(RPM, MICROSTEPS);
 
-  // Move motors to (0x0) square
-  //stepperX.rotate(DEGREE_OFFSET_X);
-  //stepperY.rotate(DEGREE_OFFSET_Y);
   
-  //initHandshake();
-  //waitForNextCommand();
-  Serial.println("testing");
 
   magnetOff();
+  
+  initHandshake();
+
+  // Move motors to (0x0) square
+  moveToXDegree(DEGREE_OFFSET_X);
+  moveToYDegree(DEGREE_OFFSET_Y);
+ 
+  waitForNextCommand();
+  
 
 }
 
@@ -351,24 +352,16 @@ int curDegree;
 int currCoord = 0;
 int prevCoord = 0;
 void loop() {
-  if (Serial.available() > 0) {
-    // read the incoming byte:
-    currCoord = Serial.parseInt();
-    int difference = currCoord - prevCoord;
-    Serial.print("Current Coord: ");
-    Serial.println(currCoord);
-    Serial.print("Previous coord: ");
-    Serial.println(prevCoord);
-
-    stepperX.rotate(difference);
-
-    while(Serial.available())
-    {
-      degree = Serial.read();
-    }
-
-    //makeMove(2, 0, 2, 2);
-    prevCoord = currCoord;
-  }
-  
+//  if(Serial.available() > 0)
+//  {
+//    degree = Serial.parseInt();
+//    Serial.println(DEGREES_PER_SQUARE*((float)(degree)) + DEGREE_OFFSET_X);
+//    
+//
+//    while(Serial.available() > 0)
+//    {
+//      degree = Serial.read();
+//    }
+//  }
+  waitForNextCommand();  
 }
