@@ -22,5 +22,6 @@ class ChessGameDriver():
 
         self.prevPiecePositions = piecePositions
 
-    def makeComputerMove(self):
+    def getBoard():
+        return self.board
 
