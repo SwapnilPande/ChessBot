@@ -20,6 +20,9 @@ class ChessID:
         # Dimension of each individual square image
         self.squareImageDim = 227
 
+        # Categories
+        self.categories = ['bb', 'bk', 'bn', 'bp', 'bq', 'br', 'empty', 'wb', 'wk', 'wn', 'wp', 'wq', 'wr']
+
         with open(self.coordinatePath) as coordFile:
             for line in coordFile:
                 line = line.replace("\n", "")
@@ -60,6 +63,8 @@ class ChessID:
     def getBoardState(self):
         ret, frame = self.camera.read()
 
+        frame = frame/255.0
+
         # Init empty np array to store the segmented square images
         squares = np.empty((64, self.squareImageDim, self.squareImageDim, 3))
 
@@ -72,7 +77,14 @@ class ChessID:
         print("starting prediction")
         predictions = []
         for square in squares:
-            predictions.append(self.predict(np.expand_dims(square, axis=0)))
+            cv2.imshow("test", square)
+            cv2.waitKey(5000)
+            out = self.predict(np.expand_dims(square, axis=0))[0]
+            index = np.where(out == np.max(out))[0][0]
+
+            predictions.append(self.categories[index])
+            print(self.categories[index])
+            cv2.destroyAllWindows()
 
         # Return piece at each square
         return predictions
@@ -84,11 +96,10 @@ class ChessID:
 
 test = ChessID()
 
-#test.calibrateBoardPosition()
+test.calibrateBoardPosition()
 board = test.getBoardState()
 
 for part in board:
     print(part)
-    print()
 test.releaseCamera()
 
