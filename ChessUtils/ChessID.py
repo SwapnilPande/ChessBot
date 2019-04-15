@@ -21,7 +21,7 @@ class ChessID:
         self.squareImageDim = 227
 
         # Categories
-        self.categories = ['bb', 'bk', 'bn', 'bp', 'bq', 'br', 'empty', 'wb', 'wk', 'wn', 'wp', 'wq', 'wr']
+        self.categories = ['b', 'k', 'n', 'p', 'q', 'r', 'empty', 'B', 'K', 'N', 'P', 'Q', 'R']
 
         with open(self.coordinatePath) as coordFile:
             for line in coordFile:

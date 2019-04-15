@@ -10,6 +10,7 @@ pyserial = "*"
 opencv-python = "*"
 keras = "*"
 tensorflow = "*"
+python-chess = "*"
 
 [requires]
 python_version = "3.7"
