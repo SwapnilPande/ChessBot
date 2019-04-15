@@ -339,10 +339,7 @@ void setup() {
 
   // Move motors to (0x0) square
   moveToXDegree(DEGREE_OFFSET_X);
-  moveToYDegree(DEGREE_OFFSET_Y);
- 
-  waitForNextCommand();
-  
+  moveToYDegree(DEGREE_OFFSET_Y); 
 
 }
 
@@ -352,16 +349,6 @@ int curDegree;
 int currCoord = 0;
 int prevCoord = 0;
 void loop() {
-//  if(Serial.available() > 0)
-//  {
-//    degree = Serial.parseInt();
-//    Serial.println(DEGREES_PER_SQUARE*((float)(degree)) + DEGREE_OFFSET_X);
-//    
-//
-//    while(Serial.available() > 0)
-//    {
-//      degree = Serial.read();
-//    }
-//  }
+  waitForPlayerMove();
   waitForNextCommand();  
 }
