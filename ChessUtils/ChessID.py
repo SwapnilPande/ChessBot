@@ -4,14 +4,15 @@ from keras.models import load_model
 
 class ChessID:
     def __init__(self):
+        print("CHESSID: Beginning initialization")
         # Initiliaze camera
         self.camera = cv2.VideoCapture(1)
 
         # Path to file containing coordinates for chessboard squares
-        self.coordinatePath = "square_locations.txt"
+        self.coordinatePath = "ChessUtils/square_locations.txt"
 
         # Path to chess-id neural network model
-        self.modelPath = "final_chess-id_model.hdf5"
+        self.modelPath = "ChessUtils/final_chess-id_model.hdf5"
         self.model = load_model(self.modelPath)
 
         # List that stores the pixel coords of the squares on the chessboard
@@ -27,6 +28,10 @@ class ChessID:
             for line in coordFile:
                 line = line.replace("\n", "")
                 self.squareCoords.append([int(x) for x in line.split(",")])
+
+        self.calibrateBoardPosition()
+        print("CHESSID: Initialization Success")
+        print("")
 
         # Initialize neural network
 
@@ -54,11 +59,11 @@ class ChessID:
             # Exit if q is pressed
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+        cv2.destroyAllWindows()
+
 
     def predict(self, squareImages):
         return self.model.predict(squareImages)
-
-
 
     def getBoardState(self):
         ret, frame = self.camera.read()
@@ -74,17 +79,13 @@ class ChessID:
                                             squareCoord[0]:squareCoord[2],:],
                                 (self.squareImageDim, self.squareImageDim))
 
-        print("starting prediction")
+        print("CHESS ID: Predicting Chess Piece Position")
         predictions = []
         for square in squares:
-            #cv2.imshow("test", square)
-            #cv2.waitKey(5000)
             out = self.predict(np.expand_dims(square, axis=0))[0]
             index = np.where(out == np.max(out))[0][0]
 
             predictions.append(self.categories[index])
-            print(self.categories[index])
-            #cv2.destroyAllWindows()
 
         # Return piece at each square
         return predictions
@@ -93,13 +94,13 @@ class ChessID:
     def releaseCamera(self):
         self.camera.release()
 
+if __name__ == "__main__":
+    test = ChessID()
 
-test = ChessID()
+    test.calibrateBoardPosition()
+    board = test.getBoardState()
 
-test.calibrateBoardPosition()
-board = test.getBoardState()
-
-for part in board:
-    print(part)
-test.releaseCamera()
+    for part in board:
+        print(part)
+    test.releaseCamera()
 

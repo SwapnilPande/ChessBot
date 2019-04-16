@@ -89,38 +89,38 @@ class ChessGameDriver():
         return int(startSquare), int(endSquare)
 
 
-    def getBoard():
+    def getBoard(self):
         return self.board
+if __name__ == "__main__":
+    test = ChessGameDriver()
+    test.startNewGame()
 
-test = ChessGameDriver()
-test.startNewGame()
+    testPos = [ None ] * 64
+    testPos[0] = "empty"
+    testPos[1] = "empty"
+    testPos[2] = "B"
+    testPos[3] = "Q"
+    testPos[4] = "K"
+    testPos[5] = "B"
+    testPos[6] = "N"
+    testPos[7] = "R"
+    for i in range(8,16):
+        testPos[i] = "P"
+    for i in range(16, 48):
+        testPos[i] = "empty"
+    for i in range(48, 56):
+        testPos[i] = "p"
+    testPos[16] = "N"
+    testPos[56] = "r"
+    testPos[57] = "n"
+    testPos[58] = "b"
+    testPos[59] = "q"
+    testPos[60] = "k"
+    testPos[61] = "b"
+    testPos[62] = "n"
+    testPos[63] = "r"
+    test.addPlayerMove(testPos)
+    print(test.board)
+    test.addPlayerMove(testPos)
 
-testPos = [ None ] * 64
-testPos[0] = "empty"
-testPos[1] = "empty"
-testPos[2] = "B"
-testPos[3] = "Q"
-testPos[4] = "K"
-testPos[5] = "B"
-testPos[6] = "N"
-testPos[7] = "R"
-for i in range(8,16):
-    testPos[i] = "P"
-for i in range(16, 48):
-    testPos[i] = "empty"
-for i in range(48, 56):
-    testPos[i] = "p"
-testPos[16] = "N"
-testPos[56] = "r"
-testPos[57] = "n"
-testPos[58] = "b"
-testPos[59] = "q"
-testPos[60] = "k"
-testPos[61] = "b"
-testPos[62] = "n"
-testPos[63] = "r"
-test.addPlayerMove(testPos)
-print(test.board)
-test.addPlayerMove(testPos)
-
-print(test.board)
+    print(test.board)

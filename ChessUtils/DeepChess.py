@@ -1,4 +1,4 @@
-import ChessBot
+import random
 
 class DeepChess:
     def __init__(self):
@@ -8,35 +8,35 @@ class DeepChess:
         self.searchDepth = None
 
     def getBitboard(self, board):
-    """
-        A bitboard is a representation of the current board state
-        There are a total of 64 squares on the board, 6 pieces, and 2 colors
-        Each unique piece/color has 64 indices, with a 1 indicating that the piece exists at that location
-        4 extra indices are for castling rights on each size
-        1 extra index indicates whose turn it is
-    """
-    bitboard = np.zeros(2*6*64  + 5)
+        """
+            A bitboard is a representation of the current board state
+            There are a total of 64 squares on the board, 6 pieces, and 2 colors
+            Each unique piece/color has 64 indices, with a 1 indicating that the piece exists at that location
+            4 extra indices are for castling rights on each size
+            1 extra index indicates whose turn it is
+        """
+        bitboard = np.zeros(2*6*64  + 5)
 
-    pieceIndices = {
-        'p': 0,
-        'n': 1,
-        'b': 2,
-        'r': 3,
-        'q': 4,
-        'k': 5}
+        pieceIndices = {
+            'p': 0,
+            'n': 1,
+            'b': 2,
+            'r': 3,
+            'q': 4,
+            'k': 5}
 
-    for i in range(64):
-        if board.piece_at(i):
-            color = int(board.piece_at(i).color)
-            bitboard[(6*color + pieceIndices[board.piece_at(i).symbol().lower()] + 12*i)] = 1
+        for i in range(64):
+            if board.piece_at(i):
+                color = int(board.piece_at(i).color)
+                bitboard[(6*color + pieceIndices[board.piece_at(i).symbol().lower()] + 12*i)] = 1
 
-    bitboard[-1] = int(board.turn)
-    bitboard[-2] = int(board.has_kingside_castling_rights(True))
-    bitboard[-3] = int(board.has_kingside_castling_rights(False))
-    bitboard[-4] = int(board.has_queenside_castling_rights(True))
-    bitboard[-5] = int(board.has_queenside_castling_rights(False))
+        bitboard[-1] = int(board.turn)
+        bitboard[-2] = int(board.has_kingside_castling_rights(True))
+        bitboard[-3] = int(board.has_kingside_castling_rights(False))
+        bitboard[-4] = int(board.has_queenside_castling_rights(True))
+        bitboard[-5] = int(board.has_queenside_castling_rights(False))
 
-    return bitboard
+        return bitboard
 
     # compareBoards
     # Takes in 2 boards and returns the better board position for the BLACK player
@@ -57,24 +57,33 @@ class DeepChess:
         v = -1
         depth = 2
         moves = []
+        bestMove = None
         for move in board.legal_moves:
-            cur = copy.copy(board)
-            cur.push(move)
-            if v == -1:
-                v = self.alphabeta(cur, depth-1, alpha, beta, False)
-                bestMove = move
-                if alpha == -1:
-                    alpha = v
-            else:
-                new_v = self.predict(self.alphabeta(cur, depth-1, alpha, beta, False), v)[0]
-                if new_v != v:
+            if((not board.is_kingside_castling(move)) and (not board.is_queenside_castling(move))):
+                moves.append(move)
+                if(board.is_capture(move)):
                     bestMove = move
-                    v = new_v
-                alpha = self.predict(alpha, v)[0]
-
-        print(bestMove)
+        if(bestMove == None):
+            bestMove = random.choice(moves)
+        capture = board.is_capture(bestMove)
         board.push(bestMove)
-        return move.from_square, move.to_square
+        #     cur = copy.copy(board)
+        #     cur.push(move)
+        #     if v == -1:
+        #         v = self.alphabeta(cur, depth-1, alpha, beta, False)
+        #         bestMove = move
+        #         if alpha == -1:
+        #             alpha = v
+        #     else:
+        #         new_v = self.predict(self.alphabeta(cur, depth-1, alpha, beta, False), v)[0]
+        #         if new_v != v:
+        #             bestMove = move
+        #             v = new_v
+        #         alpha = self.predict(alpha, v)[0]
+
+        # print(bestMove)
+        # board.push(bestMove)
+        return bestMove.from_square, bestMove.to_square, capture
 
         # Perform alpha-beta search to find optimal move
 
@@ -117,7 +126,7 @@ class DeepChess:
                         break
             return v
 
-    def computerMove(board, depth):
+    #def computerMove(board, depth):
 
 
 

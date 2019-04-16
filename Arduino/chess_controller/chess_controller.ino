@@ -14,7 +14,7 @@
 
 // STEPPER MOTOR DRIVER DEFINITIONS
 #define STEPS_PER_REV 200
-#define RPM 240
+#define RPM 360
 #define DIRECTION_PIN_X 8
 #define STEP_PIN_X 9
 #define DIRECTION_PIN_Y 6
@@ -22,8 +22,8 @@
 #define MICROSTEPS 1
 
 #define DEGREES_PER_SQUARE 2162.162162
-#define DEGREE_OFFSET_X 900 // Offset from the 0 position to the middle of the first square
-#define DEGREE_OFFSET_Y 150
+#define DEGREE_OFFSET_X 660 // Offset from the 0 position to the middle of the first square
+#define DEGREE_OFFSET_Y 300
 #define MAX_X 19250
 #define MAX_Y 17500
 
@@ -35,11 +35,19 @@ double currentDegreeY;
 
 // MAGNET PIN
 #define MAGNET_PIN 3
+// BUTTON PIN
+#define BUTTON_PIN 2
 
 // Initialize Stepper Motor Drivers here
 DRV8825 stepperX(STEPS_PER_REV, DIRECTION_PIN_X, STEP_PIN_X);
 DRV8825 stepperY(STEPS_PER_REV, DIRECTION_PIN_Y, STEP_PIN_Y);
 
+
+/////////////////// BUTTON CODE
+void buttonInit()
+{
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+}
 
 //////////////////// MAGNET CODE
 void magnetInit()
@@ -49,7 +57,7 @@ void magnetInit()
 
 void magnetOn()
 {
-  digitalWrite(MAGNET_PIN,HIGH);
+  analogWrite(MAGNET_PIN,200);
   delay(250);
 }
 
@@ -144,7 +152,7 @@ void makeMove(double startX, double startY, double finalX, double finalY, bool c
 
   // Move to center of square
   moveToXCoordinate(finalX);
-  moveToYCoordinate(finalY-0.2);
+  moveToYCoordinate(finalY-0.1);
 
   magnetOff();
 
@@ -234,7 +242,6 @@ void moveChessPiece()
   double finalX = newCoordinate%8;
   intermediate = newCoordinate/8;
   int finalY = intermediate%8;
-  
   makeMove(startX, startY, finalX, finalY, captureBool);
 
   // Send command completed message
@@ -258,7 +265,6 @@ void reset()
     Serial.write(COMMAND_COMPLETED_HEADER);
     delay(0.1);
   }
-  digitalWrite(13, HIGH);
 }
 
 void shutdownRobot()
@@ -276,16 +282,15 @@ void shutdownRobot()
     Serial.write(COMMAND_COMPLETED_HEADER);
     delay(0.1);
   }
-  digitalWrite(13, HIGH);
 }
 
 void waitForPlayerMove()
 {
-  delay(1000);
-  //while(button is not pressezd)
-//  {
-//    // do nothing
-//  }
+  
+  while(digitalRead(BUTTON_PIN) != 0)
+  { 
+    // do nothing
+  }
   while(Serial.read() != COMMAND_RECEIVED_HEADER)
   {
     Serial.write(BUTTON_PRESSED_HEADER);
@@ -300,33 +305,39 @@ void waitForPlayerMove()
 void waitForNextCommand()
 {
   int message;
-  while(true)
+  bool commandExecuted = false;
+  while(!commandExecuted)
   {
     if(Serial.available() > 0)
     {
       message = Serial.read();
-      switch(message)
-      {
-        case MOVE_PIECE_HEADER:
-          moveChessPiece();
-          break;
-        case RESET_HEADER:
-          reset();
-          break;
-        case SHUTDOWN_HEADER:
-          shutdownRobot();
-          break;
+        switch(message)
+        {
+          case MOVE_PIECE_HEADER:
+            moveChessPiece();
+            clearSerialBuffer();
+            commandExecuted = true;
+            break;
+          case RESET_HEADER:
+            reset();  
+            commandExecuted = true;
+            break;
+          case SHUTDOWN_HEADER:
+            shutdownRobot();
+            commandExecuted = true;
+            break;
+        }
       }
-    }
   }
 }
 
 
 void setup() {
   Serial.begin(9600);
+  pinMode(13, OUTPUT);
 
   magnetInit();
-
+  buttonInit();
   // Init stepper motors
   stepperX.begin(RPM, MICROSTEPS);
   stepperY.begin(RPM, MICROSTEPS);
@@ -343,11 +354,6 @@ void setup() {
 
 }
 
-int degree;
-int curDegree;
-
-int currCoord = 0;
-int prevCoord = 0;
 void loop() {
   waitForPlayerMove();
   waitForNextCommand();  
